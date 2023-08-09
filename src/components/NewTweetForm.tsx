@@ -23,38 +23,37 @@ export function TweetForm() {
     UpdateTextAreaSize(textAreaRef.current)
     textAreaRef.current = textArea
   }, [])
-
-
   useLayoutEffect(() => {
     UpdateTextAreaSize(textAreaRef?.current)
   }, [inputValue])
 
-  const createTweet = api.tweet.create.useMutation({
+  const createTweet = api.tweets.create.useMutation({
     onSuccess: newTweet => {
       console.log(newTweet)
+      setInputValue("")
     },
     onError: err => console.log(err)
   })
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
     createTweet.mutate({ content: inputValue })
-    setInputValue("")
-
   }
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col border-b py-4 px-4">
-      <div className="flex items-start gap-4">
+    <form onSubmit={handleSubmit} className="flex flex-col items-start max-w-3xl px-4 py-4 m-4 bg-gray-200 border-b rounded shadow">
+      <div className="flex items-start gap-4 my-4 ">
         <ProfileImg src={sessionData?.user.image} />
         <textarea
+          rows={20}
+          cols={70}
           ref={inputRef}
           style={{ height: 0 }}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          className="flex overflow-hidden text-lg p-4 resize-none outline-none"
+          className="flex w-full p-4 overflow-hidden text-lg outline-none resize-none"
           placeholder="what's happening ?"
         />
       </div>
-      <Button text="Tweet" className="self-end" />
+      <Button type="submit" className="self-end" >Tweet</Button>
     </form>
   )
 }

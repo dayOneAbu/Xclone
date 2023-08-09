@@ -1,16 +1,32 @@
+import InfiniteTweetList from "~/components/InfiniteTweetList";
 import NewTweetForm from "~/components/NewTweetForm";
+import { api } from "~/utils/api";
 
 export default function Home() {
-  // const hello = api.example.hello.useQuery({ text: "from tRPC" });
-
   return (
     <>
       <header className="sticky top-0 z-10 border-b bg-white px-2 py-2">
         <h1 className="mx-1 mb-4 py-4 font-medium text-xl">Home</h1>
       </header>
       <NewTweetForm />
+      <RecentTweets />
     </>
   );
+}
+function RecentTweets() {
+  const tweets = []
+  const tweetFeeds = api.tweets.infiniteTweetFeed.useInfiniteQuery({},
+    { getNextPageParam: lastPage => lastPage.nextCursor })
+
+  return (
+    <InfiniteTweetList
+      tweets={tweetFeeds.data?.pages.flatMap(item => item.tweet)}
+      isLoading={tweetFeeds.isLoading}
+      isError={tweetFeeds.isError}
+      hasMore={tweetFeeds.hasNextPage ?? false}
+      fetchNewTweets={tweetFeeds.fetchNextPage}
+    />
+  )
 }
 
 // function AuthShowcase() {
