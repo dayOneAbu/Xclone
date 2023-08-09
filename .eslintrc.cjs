@@ -4,6 +4,14 @@ const config = {
   parserOptions: {
     project: true,
   },
+  overrides: {
+    rules: {
+      // disabling some checks for prisma returns
+      "eslint-disable @typescript-eslint/no-unsafe-call": "off",
+      "eslint-disable @typescript-eslint/no-unsafe-member-access": "off",
+      "eslint-disable @typescript-eslint/no-unsafe-return": "off",
+    },
+  },
   plugins: ["@typescript-eslint"],
   extends: [
     "next/core-web-vitals",
