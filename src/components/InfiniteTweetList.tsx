@@ -4,6 +4,7 @@ import Link from "next/link"
 import ProfileImg from "./ProfileImg"
 import { HeartButton, } from "./Button"
 import { api } from "~/utils/api"
+import LoadingSpinner from "./LoadingSpinner"
 export const TweetSchema = z.object({
   id: z.string(),
   content: z.string(),
@@ -36,7 +37,7 @@ export default function InfiniteTweetList({
   hasMore,
   fetchNewTweets
 }: InfiniteTweetProps) {
-  if (isLoading) return <h1>Loading.........</h1>
+  if (isLoading) return <LoadingSpinner isBig={true} />
   if (isError) return <h1>Error</h1>
   if (tweets?.length === 0 || !tweets) {
     return (<p className="mb-4 text-lg text-center text-gray-600">
@@ -48,7 +49,7 @@ export default function InfiniteTweetList({
       dataLength={tweets.length}
       hasMore={hasMore}
       next={fetchNewTweets}
-      loader={"loading"}
+      loader={<LoadingSpinner isBig={false} />}
     >
       <ul>
         {tweets && tweets.map(tweet => (
@@ -87,7 +88,7 @@ export function TweetCard({
           pages: oldData.pages.map(page => {
             return {
               ...page,
-              tweet: page.tweet.map(tweet => {
+              tweet: page.tweets.map(tweet => {
                 if (tweet.id === id)
                   return {
                     ...tweet,

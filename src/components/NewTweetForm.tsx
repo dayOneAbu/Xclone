@@ -15,8 +15,9 @@ export default function NewTweetForm() {
 }
 
 export function TweetForm() {
-  const { data: sessionData } = useSession()
+  const { data: sessionData, status } = useSession()
   const [inputValue, setInputValue] = useState("")
+  const trpcUtils = api.useContext()
   const textAreaRef = useRef<HTMLTextAreaElement>()
   //  helps for automatically sizing the input box
   const inputRef = useCallback((textArea: HTMLTextAreaElement) => {
@@ -29,8 +30,36 @@ export function TweetForm() {
 
   const createTweet = api.tweets.create.useMutation({
     onSuccess: newTweet => {
-      console.log(newTweet)
       setInputValue("")
+      if (status == "unauthenticated" || sessionData == null) return
+      trpcUtils.tweets.infiniteTweetFeed.setInfiniteData({}, (oldData) => {
+        if (oldData == null || oldData.pages[0] == null) {
+          return
+        }
+        const cacheTweet = {
+          ...newTweet,
+          likeCount: 0,
+          likedByMe: false,
+          user: {
+            id: sessionData.user.id,
+            name: sessionData?.user.name || null,
+            image: sessionData?.user.image || null
+          }
+        }
+        return {
+          ...oldData,
+          pages: [
+            {
+              ...oldData.pages[0],
+              tweets: [
+                cacheTweet,
+                ...oldData.pages[0].tweets
+              ]
+            },
+            ...oldData.pages.slice(1)
+          ]
+        }
+      })
     },
     onError: err => console.log(err)
   })
