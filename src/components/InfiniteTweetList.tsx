@@ -3,31 +3,13 @@ import InfiniteScroll from "react-infinite-scroll-component"
 import Link from "next/link"
 import ProfileImg from "./ProfileImg"
 import { HeartButton, } from "./Button"
-import { api } from "~/utils/api"
+import { RouterOutputs, api } from "~/utils/api"
 import LoadingSpinner from "./LoadingSpinner"
-export const TweetSchema = z.object({
-  id: z.string(),
-  content: z.string(),
-  createdAt: z.date(),
-  likeCount: z.number(),
-  likedByMe: z.boolean(),
-  user: z.object({
-    id: z.string().nullable(),
-    name: z.string().nullable(),
-    image: z.string().nullable(),
-  }),
-})
 
-export const InfiniteTweetSchema = z.object({
-  tweets: z.array(TweetSchema).optional(),
-  isLoading: z.boolean(),
-  isError: z.boolean(),
-  hasMore: z.boolean(),
-  fetchNewTweets: z.function().returns(z.promise(z.unknown()))
-}).passthrough()
 
-export type InfiniteTweetProps = z.infer<typeof InfiniteTweetSchema>
-export type Tweet = z.infer<typeof TweetSchema>
+const DTFormatter = new Intl.DateTimeFormat()
+
+export type Tweet = RouterOutputs["tweets"]["infiniteTweetFeed"]["tweets"][number]
 
 
 export default function InfiniteTweetList({
@@ -36,7 +18,13 @@ export default function InfiniteTweetList({
   isError,
   hasMore,
   fetchNewTweets
-}: InfiniteTweetProps) {
+}: {
+  tweets: Tweet[] | undefined,
+  isLoading: boolean,
+  isError: boolean,
+  hasMore: boolean,
+  fetchNewTweets: () => Promise<unknown>
+}) {
   if (isLoading) return <LoadingSpinner isBig={true} />
   if (isError) return <h1>Error</h1>
   if (tweets?.length === 0 || !tweets) {
@@ -68,7 +56,6 @@ export default function InfiniteTweetList({
 
   )
 }
-const DTFormatter = new Intl.DateTimeFormat()
 export function TweetCard({
   id,
   content,
@@ -104,6 +91,8 @@ export function TweetCard({
 
 
       trpcUtils.tweets.infiniteTweetFeed.setInfiniteData({}, updateData)
+      trpcUtils.tweets.infiniteTweetFeed.setInfiniteData({ followingTweets: true }, updateData)
+      trpcUtils.tweets.infiniteProfileFeed.setInfiniteData({ userId: user.id || undefined }, updateData)
     }
   })
 

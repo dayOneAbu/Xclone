@@ -2,7 +2,7 @@ import { useState } from "react";
 import { unknown } from "zod";
 import InfiniteTweetList from "~/components/InfiniteTweetList";
 import NewTweetForm from "~/components/NewTweetForm";
-import { api } from "~/utils/api";
+import { RouterOutputs, api } from "~/utils/api";
 
 const TABS = ["Recent", "Following"] as const
 
@@ -30,16 +30,15 @@ export default function Home() {
   );
 }
 function RecentTweets() {
-  const tweetFeeds = api.tweets.infiniteTweetFeed.useInfiniteQuery({},
+  const { data: tweets, isLoading, isError, hasNextPage, fetchNextPage } = api.tweets.infiniteTweetFeed.useInfiniteQuery({},
     { getNextPageParam: lastPage => lastPage.nextCursor })
-
   return (
     <InfiniteTweetList
-      tweets={tweetFeeds.data?.pages.flatMap(item => item.tweets)}
-      isLoading={tweetFeeds.isLoading}
-      isError={tweetFeeds.isError}
-      hasMore={tweetFeeds.hasNextPage ?? false}
-      fetchNewTweets={tweetFeeds.fetchNextPage}
+      tweets={tweets?.pages.flatMap(item => item.tweets)}
+      isLoading={isLoading}
+      isError={isError}
+      hasMore={hasNextPage ?? false}
+      fetchNewTweets={fetchNextPage || undefined}
     />
   )
 }
@@ -57,27 +56,3 @@ function FollowingTweets() {
     />
   )
 }
-
-// function AuthShowcase() {
-//   const { data: sessionData } = useSession();
-
-//   const { data: secretMessage } = api.example.getSecretMessage.useQuery(
-//     undefined, // no input
-//     { enabled: sessionData?.user !== undefined }
-//   );
-
-//   return (
-//     <div className="flex flex-col items-center justify-center gap-4">
-//       <p className="text-center text-2xl text-white">
-//         {sessionData && <span>Logged in as {sessionData.user?.name}</span>}
-//         {secretMessage && <span> - {secretMessage}</span>}
-//       </p>
-//       <button
-//         className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
-//         onClick={sessionData ? () => void signOut() : () => void signIn()}
-//       >
-//         {sessionData ? "Sign out" : "Sign in"}
-//       </button>
-//     </div>
-//   );
-// }

@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { inferAsyncReturnType } from "@trpc/server";
+import { TRPCError, inferAsyncReturnType } from "@trpc/server";
 import { z } from "zod";
 import {
   createTRPCRouter,
@@ -9,6 +9,7 @@ import {
 } from "~/server/api/trpc";
 const infiniteTweetSchema = z.object({
   followingTweets: z.boolean().default(false).optional(),
+  userId: z.string().optional(),
   limit: z.number().default(10).optional(),
   cursor: z
     .object({
@@ -25,19 +26,21 @@ export const tweetRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ input: { content }, ctx }) => {
-      return await ctx.prisma.tweet.create({
+      const tweet = await ctx.prisma.tweet.create({
         data: {
           content: content,
           userId: ctx.session.user.id,
         },
       });
+      void ctx.revalidateSSG?.(`/profile/${ctx.session.user.id}`);
+      return tweet;
     }),
   // get unlimited tweets
   infiniteTweetFeed: publicProcedure
     .input(infiniteTweetSchema)
     .query(async ({ input: { limit = 10, cursor, followingTweets }, ctx }) => {
       const userId = ctx.session?.user.id;
-      return await getInfiniteTweets({
+      const tweets = await getInfiniteTweets({
         limit,
         cursor,
         ctx,
@@ -54,8 +57,21 @@ export const tweetRouter = createTRPCRouter({
                 },
               },
       });
+      if (!tweets || tweets == undefined) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "No tweets Yet!" });
+      }
+      return tweets;
     }),
-
+  infiniteProfileFeed: protectedProcedure
+    .input(infiniteTweetSchema)
+    .query(async ({ input: { limit = 10, cursor, userId }, ctx }) => {
+      return await getInfiniteTweets({
+        limit,
+        cursor,
+        ctx,
+        whereClause: { userId: userId },
+      });
+    }),
   likeTweet: protectedProcedure
     .input(z.object({ id: z.string() }))
     .mutation(async ({ input: { id }, ctx }) => {

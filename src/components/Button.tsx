@@ -70,3 +70,18 @@ export function IconHoverEffect({ children, red = false }: {
     </div>
   )
 }
+
+export function FollowBtn({ isFollowing, isLoading, userId, onClick }: {
+  isFollowing: boolean,
+  isLoading: boolean,
+  userId: string,
+  onClick: () => void
+}) {
+  const { status, data: sessionData } = useSession()
+  if (status !== "authenticated" || sessionData.user.id === userId) return null
+  return (
+    <Button disabled={isLoading} onClick={onClick} small gray={isFollowing}>
+      {isFollowing ? "UnFollow" : "Follow"}
+    </Button>
+  )
+}
